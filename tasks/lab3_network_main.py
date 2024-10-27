@@ -3,85 +3,49 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from pathlib import Path
-#from core.elements import Network
-#from core.elements import Signal_information
 import sys
 # Ensure the parent directory is in sys.path for importing core module
 ROOT = Path(__file__).parent.parent
 sys.path.append(str(ROOT))
-from core.elements import Signal_information
-from core.elements import Node
+from core.elements import Signal_information, Node, Line, Network
 
 # Exercise Lab3: Network
 
 ROOT = Path(__file__).parent.parent
 INPUT_FOLDER = ROOT / 'resources'
 file_input = INPUT_FOLDER / 'nodes.json'
-
-signal_info = Signal_information(signal_power=1.0, path=["A", "B", "C", "D"])
-print(signal_info.signal_power)  # Output: 1.0
-signal_info.update_signal_power(0.5)
-print(signal_info.signal_power)  # Output: 1.5
-print(signal_info.noise_power)  # Output: 0.0
-signal_info.update_noise_power(0.05)
-print(signal_info.noise_power)  # Output: 0.05
-print(signal_info.latency)  # Output: 0.0
-signal_info.update_latency(10)
-print(signal_info.latency)  # Output: 10.0
-print(signal_info.path)  # Output: ["A", "B", "C", "D"]
-signal_info.update_path()
-print(signal_info.path)  # Output: ["B", "C", "D"] because of the pop function
-
-nodeA_dict={
-    "label":"A",
-    "position":(0.0,1.0),
-    "connected_nodes":["B","C","D"]
-}
-
-nodeC_dict={
-    "label":"A",
-    "position":(0.0,1.0),
-    "connected_nodes":["D"]
-}
-
-node_dict = {
-    "A": Node({
-        "label": "A",
-        "position": (0.0, 1.0),
-        "connected_nodes": ["B", "D", "C"]
-    }),
-    "B": Node({
-        "label": "B",
-        "position": (1.5, 2.5),
-        "connected_nodes": ["A", "D", "F"]
-    }),
-    "C": Node({
-        "label": "C",
-        "position": (0.0, -1.0),
-        "connected_nodes": ["A", "D", "E"]
-    }),
-    "D": Node({
-        "label": "D",
-        "position": (1.5, 0.5),
-        "connected_nodes": ["A", "B", "C", "E", "F"]
-    }),
-    "E": Node({
-        "label": "E",
-        "position": (3.0, -0.5),
-        "connected_nodes": ["C", "D", "F"]
-    }),
-    "F": Node({
-        "label": "F",
-        "position": (3.0, 2.0),
-        "connected_nodes": ["B", "E", "D"]
-    })
-}
-
-node_A=Node(nodeA_dict)
-node_C=Node(nodeC_dict)
-node_A.propagate(signal_info)
+OUTPUT_FOLDER = ROOT / 'df_output'
+OUTPUT_FOLDER.mkdir(exist_ok=True)
+csv_output = OUTPUT_FOLDER / 'weighted_path.csv'
 
 # Load the Network from the JSON file, connect nodes and lines in Network.
 # Then propagate a Signal Information object of 1mW in the network and save the results in a dataframe.
 # Convert this dataframe in a csv file called 'weighted_path' and finally plot the network.
 # Follow all the instructions in README.md file
+
+# Initialize the network + Connect nodes and lines
+network = Network(file_input)
+network.connect()
+
+# Example of a signal to propagate (1 mW initial power)
+initial_signal_power = 0.001  # in Watts (1 mW)
+signal_info = Signal_information(signal_power=initial_signal_power, path=["A", "B", "F", "E"])
+# Propagate signal information through the network starting from path A->B->F->E
+modified_signal_info = network.propagate(signal_info)
+
+# Print final signal information properties after propagation
+print("Final Signal Power (W):", modified_signal_info.signal_power)
+print("Total Noise Power (W):", modified_signal_info.noise_power)
+print("Total Latency (s):", modified_signal_info.latency)
+print("Remaining Path:", modified_signal_info.path) #if all nodes are crossed is empty!
+
+# Analyze all possible paths and save them in a DataFrame
+path_df = network.analyze_paths()
+print(path_df.head())  # Display the first few rows for verification
+
+# Save DataFrame to CSV
+path_df.to_csv(csv_output, index=False)
+print(f"Path data saved to: {csv_output}")
+
+# Visualize the network graph
+network.draw()
