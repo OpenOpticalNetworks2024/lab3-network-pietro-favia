@@ -158,7 +158,6 @@ class Line(object):
         signal_information.update_noise_power(noise)  # Add the calculated noise
 
         # Get the next node in the path (if any)
-        signal_information.update_path()
         if signal_information.path:
             next_node_label = signal_information.path[0]
             if next_node_label in self.successive:
@@ -280,12 +279,10 @@ class Network(object):
     # and returns the modified spectral information
     def propagate(self, signal_information):
         """Propagate signal information through the path defined in signal_information"""
-
-        """start_node = self._nodes[signal_information.path[0]]
+        start_node = self._nodes[signal_information.path[0]]
         start_node.propagate(signal_information)
-        #v = 2/3*3e8 #signal speed inside the fiber is at around 2/3 of the speed of light
-        #"""
 
+        """ Local Version of Propagate (not useful, just a code from vers0 of Lab3)
         while signal_information.path:
             current_node_label = signal_information.path[0]
             signal_information.update_path()  # Remove current node from path
@@ -307,7 +304,8 @@ class Network(object):
                     print(f"Error: No successive line found for {next_node_label} from {current_node_label}")
                     break # Stop propagation if no line connects the nodes
 
-        print("End of path reached.")
+        print("End of path reached.")#"""
+
         return signal_information
 
     def analyze_paths(self):
